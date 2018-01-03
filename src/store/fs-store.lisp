@@ -3,7 +3,7 @@
 
 (defvar *directory-cache*
   (make-hash-table :test #'equal))
-
+;; 在磁盘上建立存储文件目录
 (defun make-fs-directory (path &key create-p)
   (setf path (cl-fad:pathname-as-directory path))
   (when create-p
@@ -14,7 +14,7 @@
 	(setf dir (make-instance 'fs-directory :path path))
 	(setf (gethash truename *directory-cache*) dir))
       (when create-p
-	(refresh dir))
+	(refresh dir));;  重建索引文件夹，直接删除掉目录下的所有文件
       dir)))
 
 (defun clear-fs-directory-cache ()
@@ -54,7 +54,7 @@
   )
 
 (defmethod files ((self fs-directory))
-  (with-slots (path) self  
+  (with-slots (path) self
     (mapcar #'(lambda (file-path)
 		(enough-namestring file-path path))
 	    (cl-fad:list-directory path))))
@@ -126,7 +126,7 @@
 (defmethod seek :after ((self fs-index-output) pos)
   (with-slots (file) self
     (file-position file pos)))
-
+;; 顺序写入文件
 (defmethod flush-buffer ((self fs-index-output) b size)
   (with-slots (file) self
     (write-sequence b file :start 0 :end size)))
@@ -167,6 +167,3 @@
 (defmethod seek-internal ((self fs-index-input) pos)
   (with-slots (file) self
     (file-position file pos)))
-
-
-

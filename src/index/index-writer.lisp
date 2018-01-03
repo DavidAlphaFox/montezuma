@@ -11,7 +11,7 @@
 (defparameter *index-writer-default-term-index-interval* 128)
 
 (defclass index-writer ()
-  ((directory :initarg :directory)
+  ((directory :initarg :directory) ;; 目录
    (close-dir-p :initarg :close-dir-p)
    (use-compound-file-p :initarg :use-compound-file-p)
    (analyzer :initarg :analyzer :reader analyzer)
@@ -34,7 +34,7 @@
     :max-merge-docs      *index-writer-default-max-merge-docs*
     :max-field-length    *index-writer-default-max-field-length*
     :term-index-interval *index-writer-default-term-index-interval*))
-
+;; 初始化index writer
 (defmethod initialize-instance :after ((self index-writer) &key (create-p NIL) (create-if-missing-p NIL) &allow-other-keys)
   (with-slots (directory ram-directory segment-infos) self
     (if (null directory)
@@ -286,7 +286,7 @@
 	    ;; any error?
 	    (push filename deletions-to-retry))))
       (reverse deletions-to-retry))))
-    
+
 (defgeneric read-deletable-files (index-writer))
 
 (defmethod read-deletable-files ((self index-writer))

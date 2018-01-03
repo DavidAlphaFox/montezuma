@@ -1,6 +1,6 @@
 (in-package #:montezuma)
 
-(defclass document ()
+(defclass document () ;;  文档被定义为 boost因子，存储域fields
   ((boost :initform 1.0 :initarg :boost :accessor boost)
    (fields :initform (make-table :test #'equal))))
 
@@ -18,7 +18,7 @@
 
 (defmethod all-fields ((self document))
   (with-slots (fields) self
-    (reduce #'append (table-values fields))))
+    (reduce #'append (table-values fields)))) ;; 从fields域中取出所有的值
 
 (defgeneric field-count (document))
 
@@ -33,10 +33,11 @@
 
 (defgeneric add-field (document field))
 
-(defmethod add-field ((self document) (field field))
+(defmethod add-field ((self document) (field field));; 给文档添加域
   (with-slots (fields) self
     (let* ((name (field-name field))
 	   (fields-with-name (table-value fields name)))
+      ;; 名字对应的属性是个list
       (setf (table-value fields name) (append fields-with-name (list field)))))
   self)
 
@@ -79,7 +80,7 @@
 	      (if (null a2)
 		  a1
 		  (concatenate 'vector a1 a2)))
-	  (mapcar #'field-data 
+	  (mapcar #'field-data
 		  (remove-if-not #'field-binary-p (document-fields self name)))))
 
 (defgeneric document-values (document name))

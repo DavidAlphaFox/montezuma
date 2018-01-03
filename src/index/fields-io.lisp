@@ -78,18 +78,18 @@
 						 :store-term-vector stv)))))))))
       doc)))
 
-				     
+
 (defun uncompress (input)
   ;; FIXME: well, yes.
   input)
 
-
+;; 域写入class
 (defclass fields-writer ()
   ((field-infos :initarg :field-infos)
    (fields-stream)
    (index-stream)))
 
-
+;;  打开segment文件
 (defun open-segment-file (directory segment extension direction)
   (check-type direction (member :input :output))
   (let ((file (add-file-extension segment extension)))
@@ -146,4 +146,3 @@
     (let ((len (length data)))
       (write-vint fields-stream len)
       (write-bytes fields-stream data len))))
-

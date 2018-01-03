@@ -20,7 +20,7 @@
   NIL)
 
 ;; Hash tables
-
+;; Hash Table当作table来用
 (defmethod table-like-p ((table hash-table))
   T)
 
@@ -52,7 +52,7 @@
 
 
 ;; This is basically Chris Riesbeck's implementation.
-
+;; table是一个struct，内部有entries和test函数组成
 (defstruct table
   entries
   test)
@@ -82,9 +82,11 @@
   (not (null (table-entry table key))))
 
 (defmethod table-values ((table table))
+  ;; (mapcar #'cdr '((1 a) (2 b) (3 c))) =>  ((a) (b) (c))
   (mapcar #'cdr (table-entries table)))
 
 (defmethod table-keys ((table table))
+  ;; (mapcar #'car '((1 a) (2 b) (3 c))) =>  (1 2 3)
   (mapcar #'car (table-entries table)))
 
 (defmethod remtable ((table table) key)

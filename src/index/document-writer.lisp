@@ -68,7 +68,7 @@
 		  (let ((string-value (string-value field)))
 		    (if (field-store-offsets-p field-info)
 			(progn
-			  (add-position self 
+			  (add-position self
 					field-name
 					string-value
 					position
@@ -247,4 +247,3 @@
     (with-slots (term freq positions offsets) self
       (format stream "term: ~S freq: ~S positions: ~S offsets: ~S"
 	      term freq positions offsets))))
-	    

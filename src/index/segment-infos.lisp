@@ -113,30 +113,30 @@
               (version sis))))))
 
 (defgeneric read-segment-infos (segment-infos directory))
-
+;; 从目录中读取到内存结构中
 (defmethod read-segment-infos ((self segment-infos) directory)
   (let ((input (open-input directory *segment-filename*)))
     (unwind-protect
-	 (with-slots (format counter version elements) self
-	   (setf format (read-int input))
-	   (if (< format 0)
-	       (progn
-		 (when (< format *segment-format*)
-		   (error "Unknown format version ~S" format))
-		 (setf version (read-long input))
-		 (setf counter (read-int input)))
-	       (setf counter format))
-	   (let ((seg-count (read-int input)))
-	     (dotimes (i seg-count)
-	       (add-segment-info self
-				 (make-instance 'segment-info
-						:name (read-string input)
-						:doc-count (read-int input)
-						:directory directory))))
-	   (when (>= format 0)
-	     (if (>= (pos input) (size input))
-		 (setf version 0)
-		 (setf version (read-long input)))))
+         (with-slots (format counter version elements) self
+           (setf format (read-int input)) ;; 设置format
+           (if (< format 0)
+               (progn
+                 (when (< format *segment-format*)
+                   (error "Unknown format version ~S" format))
+                 (setf version (read-long input))
+                 (setf counter (read-int input)))
+               (setf counter format))
+           (let ((seg-count (read-int input))) ;;读取seg的数量
+             (dotimes (i seg-count)
+               (add-segment-info self
+                                 (make-instance 'segment-info
+                                                :name (read-string input)
+                                                :doc-count (read-int input)
+                                                :directory directory))))
+           (when (>= format 0)
+             (if (>= (pos input) (size input))
+                 (setf version 0)
+                 (setf version (read-long input)))))
       (close input))))
 
 (defgeneric write-segment-infos (segment-infos directory))

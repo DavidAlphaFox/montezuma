@@ -1,5 +1,5 @@
 (in-package #:montezuma)
-
+;; 区块信息
 (defclass segment-info ()
   ((name :initarg :name :accessor segment-info-name)
    (doc-count :initarg :doc-count :accessor doc-count)
@@ -13,9 +13,9 @@
 
 (defmethod segment-info= ((self segment-info) other)
   (with-slots (name doc-count) self
-    (and (typep other 'segment-info)
-	 (string= name (slot-value other 'name))
-	 (eql doc-count (slot-value other 'doc-count)))))
+    (and (typep other 'segment-info) ;; 比较对象是segment-info
+	 (string= name (slot-value other 'name)) ;; 比较对象name是否相同
+	 (eql doc-count (slot-value other 'doc-count))))) ;; 比较对象的文档shu
 
 (defmethod has-deletions-p ((si segment-info))
   (file-exists-p (directory si) (add-file-extension (segment-info-name si) "del")))
@@ -53,13 +53,14 @@
 
 (defmethod clear ((self segment-infos))
   (setf (slot-value self 'elements) (make-array 0 :adjustable T :fill-pointer T)))
-
+;; 计算所有元素的长度
 (defmethod size ((self segment-infos))
   (with-slots (elements) self
     (length elements)))
 
 (defgeneric delete-at (segment-infos index))
-
+;; 从特定位置删除元素
+;; 效率很低，用分割算法将数组进行了分割，之后再聚合一起，创建一个新的数组
 (defmethod delete-at ((self segment-infos) index)
   (with-slots (elements) self
     ;; FIXME truly atrocious
@@ -67,7 +68,7 @@
     (setf elements (make-array (length new-elements) :adjustable T :fill-pointer T :initial-contents new-elements)))))
 
 (defgeneric add-segment-info (segment-infos si))
-
+;; 将segment-info放入当前的segments
 (defmethod add-segment-info ((self segment-infos) si)
   (with-slots (elements) self
     (vector-push-extend si elements)))
@@ -79,7 +80,7 @@
     (elt elements index)))
 
 (defgeneric (setf segment-info) (value segment-infos index))
-
+;; 修改setf的操作
 (defmethod (setf segment-info) (value (self segment-infos) index)
   (with-slots (elements) self
     (assert (< index (length elements)))
@@ -90,27 +91,27 @@
     (setf (segment-info self i) (clone (segment-info other i)))))
 
 (defun segment-infos-read-current-version (directory)
-  (if (not (file-exists-p directory *segment-filename*))
+  (if (not (file-exists-p directory *segment-filename*)) ;; 如果不存在segment文件，那么就是版本0
       0
       (let ((format nil)
-	    (version nil))
-	(let ((input (open-input directory *segment-filename*)))
-	  (unwind-protect
-	       (progn
-		 (setf format 0)
-		 (setf version 0)
-		 (setf format (read-int input))
-		 (when (< format 0)
-		   (when (< format *segment-format*)
-		     (error "Unknown format version ~S" format))
-		   (setf version (read-long input))))
-	    (close input)))
-	(if (< format 0)
-	    version
-	    (let ((sis (make-instance 'segment-infos)))
-	      (read-segment-infos sis directory)
-	      (version sis))))))
-	
+            (version nil))
+        (let ((input (open-input directory *segment-filename*)))
+          (unwind-protect
+               (progn
+                 (setf format 0)
+                 (setf version 0)
+                 (setf format (read-int input));; 读取format信息
+                 (when (< format 0)
+                   (when (< format *segment-format*)
+                     (error "Unknown format version ~S" format))
+                   (setf version (read-long input)))) ;;获取版本
+            (close input)))
+        (if (< format 0)
+            version ;; format为 < 0的时候直接返回version
+            (let ((sis (make-instance 'segment-infos)))
+              (read-segment-infos sis directory) ;; 去读取目录下的segments
+              (version sis))))))
+
 (defgeneric read-segment-infos (segment-infos directory))
 
 (defmethod read-segment-infos ((self segment-infos) directory)
@@ -140,18 +141,19 @@
 
 (defgeneric write-segment-infos (segment-infos directory))
 
-
+;;将segments写到输出上
+;; 排列顺序为 format，version，conter, size,element,element ...
 (defmethod write-segment-infos ((self segment-infos) directory)
   (let ((output (create-output directory *temporary-segment-filename*)))
     (unwind-protect
-	 (with-slots (version counter elements) self
-	   (write-int output *segment-format*)
-	   (write-long output (incf version))
-	   (write-int output counter)
-	   (write-int output (size self))
-	   (dotimes (i (length elements))
-	     (let ((si (segment-info self i)))
-	       (write-string output (segment-info-name si))
-	       (write-int output (doc-count si)))))
+         (with-slots (version counter elements) self
+           (write-int output *segment-format*)
+           (write-long output (incf version))
+           (write-int output counter)
+           (write-int output (size self))
+           (dotimes (i (length elements))
+             (let ((si (segment-info self i)))
+               (write-string output (segment-info-name si))
+               (write-int output (doc-count si)))))
       (close output)))
   (rename-file directory *temporary-segment-filename* *segment-filename*))
